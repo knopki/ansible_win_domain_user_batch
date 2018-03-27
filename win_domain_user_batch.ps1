@@ -49,7 +49,7 @@ foreach ($u_obj in $users_arr) {
   $u_h.enabled = Get-AnsibleParam -obj $u_h -name "enabled" -type "bool" -default $true
   $u_h.password = Get-AnsibleParam -obj $u_h -name "password" -type "str" -default $default_password
   $u_h.password_never_expires = Get-AnsibleParam -obj $u_h -name "password_never_expires" -type "bool" -default $false
-  $u_h.update_password = Get-AnsibleParam -obj $u_h -name "update_password" -type "str" -default "on_create" -validateset "absent","present"
+  $u_h.update_password = Get-AnsibleParam -obj $u_h -name "update_password" -type "str" -default "on_create" -validateset "on_create","always"
   $u_h.user_cannot_change_password = Get-AnsibleParam -obj $u_h -name "user_cannot_change_password" -type "bool" -default $false
   $upn = $u_h.sAMAccountName+"@"+$default_upn_suffix
   $u_h.upn = Get-AnsibleParam -obj $u_h -name "upn" -type "str" -default $upn
