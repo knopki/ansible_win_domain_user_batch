@@ -113,6 +113,8 @@ try {
         New-ADUser -Name $user.name -sAMAccountName $user.sAMAccountName -Path $user.path -WhatIf:$check_mode @extra_args
         Update-Result $user.sAMAccountName "state" "absent" "present"
         $u = Get-ADUser -Identity $user.sAMAccountName -Properties * @extra_args
+        $secure_password = ConvertTo-SecureString $user.password -AsPlainText -Force
+        Set-ADAccountPassword -Identity $user.sAMAccountName -Reset:$true -Confirm:$false -NewPassword $secure_password -WhatIf:$check_mode @extra_args
       }
 
       # Set UPN
