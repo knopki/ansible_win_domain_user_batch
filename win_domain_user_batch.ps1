@@ -53,7 +53,7 @@ foreach ($u_obj in $users_arr) {
   $u_h.user_cannot_change_password = Get-AnsibleParam -obj $u_h -name "user_cannot_change_password" -type "bool" -default $false
   $upn = $u_h.sAMAccountName+"@"+$default_upn_suffix
   $u_h.upn = Get-AnsibleParam -obj $u_h -name "upn" -type "str" -default $upn
-  $u_h.clear_attributes = Get-AnsibleParam -obj $u_h -name "clear_attributes" -type "list"
+  $u_h.clear_attributes = Get-AnsibleParam -obj $u_h -name "clear_attributes" -type "list" -default @()
 
   #attrs
   if ($u_h.containsKey("attributes")) {
@@ -61,7 +61,7 @@ foreach ($u_obj in $users_arr) {
     $u_h.attributes.psobject.properties | Foreach { $a_h[$_.Name] = $_.Value }
     $u_h.attributes = $a_h
   } else {
-    $u_h.attributes = $null
+    $u_h.attributes = @()
   }
 
   # object name
@@ -155,28 +155,26 @@ try {
       # Set additional attributes
       $set_args = $extra_args.Clone()
       $run_change = $false
-      if ($user.attributes) {
-        $add_attributes = @{}
-        $replace_attributes = @{}
-        $clear_attributes = @()
-        foreach ($attribute in $user.attributes.GetEnumerator()) {
-          $attribute_name = $attribute.Name
-          $attribute_value = $attribute.Value
-          $valid_property = [bool]($u.PSobject.Properties.name -eq $attribute_name)
-          if ($valid_property) {
-            $existing_value = $u.$attribute_name
-            if ($existing_value -cne $attribute_value) {
-              $replace_attributes[$attribute_name] = $attribute_value
-              Update-Result $user.sAMAccountName $attribute_name $u.$attribute_name $attribute_value
-            }
-            if ($user.clear_attributes -and $user.clear_attributes.contains($attribute_name)) {
-              $clear_attributes += $attribute_name
-              Update-Result $user.sAMAccountName $attribute_name $attribute_value $null
-            }
-          } else {
-            $add_attributes[$attribute_name] = $attribute_value
-            Update-Result $user.sAMAccountName $attribute_name $null $attribute_value
+      $add_attributes = @{}
+      $replace_attributes = @{}
+      $clear_attributes = @()
+      foreach ($attribute in $user.attributes.GetEnumerator()) {
+        $attribute_name = $attribute.Name
+        $attribute_value = $attribute.Value
+        $valid_property = [bool]($u.PSobject.Properties.name -eq $attribute_name)
+        if ($valid_property) {
+          $existing_value = $u.$attribute_name
+          if ($existing_value -cne $attribute_value) {
+            $replace_attributes[$attribute_name] = $attribute_value
+            Update-Result $user.sAMAccountName $attribute_name $u.$attribute_name $attribute_value
           }
+          if ($user.clear_attributes -and $user.clear_attributes.contains($attribute_name)) {
+            $clear_attributes += $attribute_name
+            Update-Result $user.sAMAccountName $attribute_name $attribute_value $null
+          }
+        } else {
+          $add_attributes[$attribute_name] = $attribute_value
+          Update-Result $user.sAMAccountName $attribute_name $null $attribute_value
         }
 
         if ($add_attributes.Count -gt 0) {
